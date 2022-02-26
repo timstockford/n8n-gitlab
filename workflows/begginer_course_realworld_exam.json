@@ -1,0 +1,268 @@
+{
+  "name": "begginer_course_realworld_exam",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        60,
+        -80
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://internal.users.n8n.cloud/webhook/custom-erp",
+        "options": {
+          "splitIntoItems": true
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "unique_id",
+              "value": "recftpvph4GvTat23"
+            }
+          ]
+        }
+      },
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        360
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "beginner_course"
+        }
+      },
+      "notes": "Get data from Data Warehouse"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"orderStatus\"]}}",
+              "value2": "processing"
+            },
+            {
+              "value1": "={{$json[\"employeeName\"]}}",
+              "value2": "Mario"
+            }
+          ]
+        }
+      },
+      "name": "IF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        240,
+        360
+      ],
+      "notesInFlow": true,
+      "notes": "If orderStatus = \"Processing\""
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "number": [
+            {
+              "name": "orderID",
+              "value": "={{$json[\"orderID\"]}}"
+            }
+          ],
+          "string": [
+            {
+              "name": "employeeName",
+              "value": "={{$json[\"employeeName\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        840,
+        0
+      ],
+      "notesInFlow": true,
+      "notes": "Select orderId,employeeName"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "application": "appgtudW5Xze4BjSs",
+        "table": "processingOrders",
+        "options": {}
+      },
+      "name": "Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        0
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "airtableApi": {
+          "id": "2",
+          "name": "Airtable tdstockford@gmail.com"
+        }
+      },
+      "notes": "append to processingOrders"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Calculate # of items & total of orderPrice records\n\nlet totalBooked = items.length;\nlet bookedSum = 0;\n\nfor(let i=0; i < items.length; i++) {\n  bookedSum = bookedSum + items[i].json.orderPrice;\n}\nreturn [{json:{totalBooked, bookedSum}}];\n"
+      },
+      "name": "Function",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        560,
+        500
+      ],
+      "notesInFlow": true,
+      "notes": "Calculate totalBooked,bookedSum"
+    },
+    {
+      "parameters": {
+        "webhookUri": "https://internal.users.n8n.cloud/webhook/course-level-1",
+        "text": "=This week we have {{$json[\"totalBooked\"]}} booked orders with a total value of {{$json[\"bookedSum\"]}}. My Unique ID: {{$node[\"HTTP Request\"].parameter[\"headerParametersUi\"][\"parameter\"][0][\"value\"]}}"
+      },
+      "name": "Discord",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 1,
+      "position": [
+        880,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyWeek",
+              "hour": 10,
+              "minute": 17,
+              "weekday": "0"
+            }
+          ]
+        }
+      },
+      "name": "Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Calculate # of items & total of orderPrice records\n\nlet totalBooked = items.length;\nlet bookedSum = 0;\n\nfor(let i=0; i < items.length; i++) {\n  bookedSum = bookedSum + items[i].json.orderPrice;\n}\nreturn [{json:{totalBooked, bookedSum}}];\n"
+      },
+      "name": "Function1",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        520,
+        -20
+      ],
+      "notesInFlow": true,
+      "notes": "Calculate totalBooked,bookedSum"
+    }
+  ],
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF": {
+      "main": [
+        [
+          {
+            "node": "Function1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set": {
+      "main": [
+        [
+          {
+            "node": "Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function1": {
+      "main": [
+        [
+          {
+            "node": "Set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "id": 1002
+}

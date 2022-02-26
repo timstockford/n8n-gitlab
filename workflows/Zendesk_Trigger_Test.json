@@ -1,0 +1,90 @@
+{
+  "name": "Zendesk Trigger Test",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        580,
+        60
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {
+          "fields": [
+            "ticket.title",
+            "ticket.id",
+            "ticket.url",
+            "ticket.external_id"
+          ]
+        },
+        "conditions": {
+          "any": [
+            {
+              "resource": "=ticket"
+            }
+          ]
+        }
+      },
+      "name": "Zendesk Trigger",
+      "type": "n8n-nodes-base.zendeskTrigger",
+      "typeVersion": 1,
+      "position": [
+        160,
+        360
+      ],
+      "webhookId": "b5428512-990e-4df4-8a35-0c885f178be7",
+      "credentials": {
+        "zendeskApi": {
+          "id": "3",
+          "name": "Zendesk CoremontHelp Trial"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "channel": "zendesk-notifications",
+        "text": "=New ticket created in Zendesk: \nid: {{$json[\"ticket.id\"]}}\ntitle: {{$json[\"ticket.title\"]}}\nurl: {{$json[\"ticket.url\"]}}",
+        "attachments": [],
+        "otherOptions": {}
+      },
+      "name": "Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        380,
+        360
+      ],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "4",
+          "name": "Slack stockford workspace"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Zendesk Trigger": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true
+  },
+  "id": 1004
+}
